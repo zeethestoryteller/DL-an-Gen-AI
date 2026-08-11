@@ -428,3 +428,336 @@ print("Un-squeezed at dim=1 shape:", column_vector.shape)  # torch.Size([3, 1])
 | **`torch.squeeze(t, dim=None)`** | Removes all or specified dimensions of size `1`. | Cleaning up redundant output dimensions after pooling or calculations. |
 | **`torch.unsqueeze(t, dim)`** | Inserts a new dimension of size `1` at the given index. | Adding a batch dimension (`dim=0`) to a single inference sample. |
 
+---
+
+# 📚 MODULE NOTES: Mathematical and Arithmetic Manipulation Methods
+
+## 1. Introduction: Why PyTorch-Level Math Matters
+
+When building deep learning models, we rarely write manual `for` loops to process numbers element by element in Python—it would be painfully slow. PyTorch leverages **C++ and CUDA backends** to execute mathematical operations on massive tensors concurrently (vectorization), making computations blazing fast and GPU-friendly.
+
+---
+
+## 2. Basic Element-Wise Arithmetic Operations
+
+Arithmetic operators in PyTorch (`+`, `-`, `*`, `/`) work **element-wise** by default. This means every operation is applied directly to matching elements at the same position in the tensors.
+
+Alternatively, PyTorch provides explicit functional syntax for these operations, which is useful when passing functions as arguments or working with computational graphs.
+
+```python
+import torch
+
+# Create two tensors
+a = torch.tensor([1.0, 2.0, 3.0])
+b = torch.tensor([10.0, 20.0, 30.0])
+
+# 1. Addition
+print("Addition (+):", a + b)                  # tensor([11., 22., 33.])
+print("Using torch.add():", torch.add(a, b))
+
+# 2. Subtraction
+print("Subtraction (-):", b - a)                 # tensor([9., 18., 27.])
+print("Using torch.sub():", torch.sub(b, a))
+
+# 3. Multiplication (Element-wise / Hadamard)
+print("Multiplication (*):", a * b)              # tensor([10., 40., 90.])
+print("Using torch.mul():", torch.mul(a, b))
+
+# 4. Division
+print("Division (/):", b / a)                    # tensor([10., 10., 10.])
+print("Using torch.div():", torch.div(b, a))
+
+```
+
+---
+
+## 3. Exponents, Powers, and Logarithms
+
+Neural networks frequently apply non-linear transformations, exponentials (like in Softmax layers), and logarithms (like in Cross-Entropy Loss calculations).
+
+```python
+x = torch.tensor([1.0, 2.0, 3.0])
+
+# 1. Power / Exponentiation (e.g., squaring each element)
+print("Squared (x^2):", torch.pow(x, 2))          # tensor([1., 4., 9.])
+print("Alternative syntax:", x ** 2)
+
+# 2. Exponential (e^x)
+print("Exponential (e^x):", torch.exp(x))
+
+# 3. Natural Logarithm (ln(x))
+print("Natural Log:", torch.log(x))
+
+```
+
+---
+
+## 4. Reduction Operations (Aggregations)
+
+Reduction methods take a multi-dimensional tensor and **collapse** one or more dimensions down into a single aggregate value (like finding the total sum, mean, or extreme values).
+
+* **Crucial Argument (`dim`):** If you don't specify a dimension, PyTorch reduces the *entire* tensor into a single scalar. If you specify a `dim`, it collapses just that specific axis.
+
+```python
+# Create a 2x3 matrix
+matrix = torch.tensor([[1.0, 2.0, 3.0],
+                       [4.0, 5.0, 6.0]])
+
+# 1. Summation
+print("Total Sum of all elements:", torch.sum(matrix).item())      # 21.0
+print("Sum across columns (dim=0):", torch.sum(matrix, dim=0))     # tensor([5., 7., 9.])
+print("Sum across rows (dim=1):", torch.sum(matrix, dim=1))        # tensor([ 6., 15.])
+
+# 2. Mean (Average)
+print("Mean of all elements:", torch.mean(matrix).item())          # 3.5
+
+# 3. Maximum and Minimum
+print("Global Maximum:", torch.max(matrix).item())                 # 6.0
+print("Global Minimum:", torch.min(matrix).item())                 # 1.0
+
+```
+
+---
+
+## 5. Finding Extremes with Locations (`argmax` and `argmin`)
+
+In classification tasks, your model outputs a vector of raw scores (logits) or probabilities for different classes. To find *which* class won, you need the **index** of the highest value.
+
+* `torch.argmax()` returns the index position of the maximum value.
+* `torch.argmin()` returns the index position of the minimum value.
+
+```python
+# Model output probabilities for 4 different classes
+probabilities = torch.tensor([0.05, 0.85, 0.08, 0.02])
+
+# Find the index of the highest probability
+predicted_class = torch.argmax(probabilities).item()
+
+print("Probabilities:", probabilities)
+print("Predicted Class Index (Argmax):", predicted_class)  # Output: 1 (since 0.85 is at index 1)
+
+```
+
+---
+
+## 📝 Quick-Reference Summary Table for Your Notebook
+
+| Mathematical Operation | Function / Operator | Description |
+| --- | --- | --- |
+| **Element-wise Math** | `+`, `-`, `*`, `/` (or `torch.add`, etc.) | Computes arithmetic operations matching position-to-position. |
+| **Powers & Roots** | `torch.pow(t, n)` or `t ** n` | Raises tensor elements to a given power. |
+| **Exponentials & Logs** | `torch.exp(t)`, `torch.log(t)` | Applies natural exponential or logarithmic functions element-wise. |
+| **Reductions** | `torch.sum()`, `torch.mean()` | Collapses tensor dimensions to calculate totals or averages. |
+| **Peak Location** | `torch.argmax(t)`, `torch.argmin(t)` | Locates the **index position** of the maximum or minimum value. |
+
+---
+
+# 📚 MODULE NOTES: Combining and Splitting Tensors
+
+## 1. Introduction: Why Do We Need Tensor Combination?
+
+In deep learning pipelines, data rarely arrives all at once. Often, you need to:
+
+* Batch individual image samples together into a mini-batch before feeding them to a neural network.
+* Combine outputs or feature maps from different layers or branches of an architecture.
+
+To handle these scenarios, PyTorch provides powerful tools to **glue tensors together** (Concatenation and Stacking) or **tear them apart** (Splitting and Chunking).
+
+---
+
+## 2. Concatenation (`torch.cat`)
+
+Concatenation joins two or more existing tensors along an **already existing dimension** (axis).
+
+* **The Golden Rule:** All tensors being concatenated must have the exact same shape, *except* along the specific dimension you are joining them on.
+* **Syntax:** `torch.cat((tensor1, tensor2, ...), dim=0)`
+
+```python
+import torch
+
+# Create two 2x3 matrices
+t1 = torch.tensor([[1, 2, 3],
+                   [4, 5, 6]])
+
+t2 = torch.tensor([[7, 8, 9],
+                   [10, 11, 12]])
+
+# 1. Concatenate along Rows (dim=0 / Vertically)
+# Resulting shape: (4, 3) -> 2 rows + 2 rows = 4 rows
+cat_dim0 = torch.cat((t1, t2), dim=0)
+print("Concatenated along dim=0 (Vertical):\n", cat_dim0)
+
+# 2. Concatenate along Columns (dim=1 / Horizontally)
+# Resulting shape: (2, 6) -> 3 cols + 3 cols = 6 cols
+cat_dim1 = torch.cat((t1, t2), dim=1)
+print("\nConcatenated along dim=1 (Horizontal):\n", cat_dim1)
+
+```
+
+---
+
+## 3. Stacking Tensors (`torch.stack`)
+
+While concatenation glues tensors along an existing axis, **stacking creates a brand-new dimension** to join them. This is the exact tool you use to build a batch out of individual samples.
+
+* **The Golden Rule:** All tensors must have the **exact same shape** in every single dimension.
+* **Syntax:** `torch.stack((tensor1, tensor2, ...), dim=0)`
+
+```python
+# Imagine these are two separate 1D feature vectors for individual samples (length 3)
+sample1 = torch.tensor([1.0, 2.0, 3.0])
+sample2 = torch.tensor([4.0, 5.0, 6.0])
+
+# Stack them together along a new batch dimension at index 0
+# Shape of sample1: torch.Size([3])
+# Shape after stacking: torch.Size([2, 3]) -> 2 samples in the batch!
+batch_tensor = torch.stack((sample1, sample2), dim=0)
+
+print("Stacked Batch Tensor:\n", batch_tensor)
+print("New Batch Shape:", batch_tensor.shape)
+
+```
+
+---
+
+## 4. Splitting Tensors (`torch.split`)
+
+Sometimes you have a large tensor (like a mini-batch or a combined feature matrix) and you need to break it back down into smaller, individual segments.
+
+* **Syntax:** `torch.split(tensor, split_size_or_sections, dim=0)`
+* You can either specify an **equal split size** or pass a list of specific lengths for each section.
+
+```python
+# Create a 1D tensor with 6 elements
+large_tensor = torch.tensor([10, 20, 30, 40, 50, 60])
+
+# 1. Split into equal chunks of size 2
+# This yields 3 smaller tensors of size 2
+chunks = torch.split(large_tensor, split_size_or_sections=2, dim=0)
+print("Equal splits of size 2:")
+for i, chunk in enumerate(chunks):
+    print(f"Chunk {i+1}:", chunk)
+
+# 2. Split into custom uneven lengths (e.g., sections of size 1, 3, and 2)
+uneven_chunks = torch.split(large_tensor, split_size_or_sections=[1, 3, 2], dim=0)
+print("\nUneven splits ([1, 3, 2]):")
+for i, chunk in enumerate(uneven_chunks):
+    print(f"Uneven Chunk {i+1}:", chunk)
+
+```
+
+---
+
+## 5. Chunking Tensors (`torch.chunk`)
+
+`torch.chunk()` is a close cousin to `torch.split()`. The primary difference is how you specify the division:
+
+* In `torch.split`, you specify **how many elements** each chunk should contain.
+* In `torch.chunk`, you specify **how many total chunks** you want to break the tensor into.
+
+```python
+t = torch.tensor([1, 2, 3, 4, 5, 6])
+
+# Break the tensor into exactly 3 equal chunks
+# (PyTorch automatically calculates that each chunk will have 2 elements)
+chunked_t = torch.chunk(t, chunks=3, dim=0)
+
+print("\nChunking into 3 parts:")
+for i, c in enumerate(chunked_t):
+    print(f"Part {i+1}:", c)
+
+```
+
+---
+
+## 📝 Quick-Reference Summary Table for Your Notebook
+
+| Operation | Function | Key Behavior / Rule |
+| --- | --- | --- |
+| **Concatenation** | `torch.cat((t1, t2), dim)` | Joins tensors along an **existing dimension**. Tensors must match in all other dimensions. |
+| **Stacking** | `torch.stack((t1, t2), dim)` | Joins tensors by **creating a brand-new dimension**. Tensors must have identical shapes. |
+| **Splitting** | `torch.split(t, split_size, dim)` | Breaks a tensor apart based on **chunk size** or explicit section lengths. |
+| **Chunking** | `torch.chunk(t, chunks, dim)` | Breaks a tensor apart into a **fixed total number of chunks**. |
+
+---
+
+# 📚 MODULE NOTES: In-Place Operations in PyTorch
+
+## 1. Introduction: Out-of-Place vs. In-Place (The Memory Story)
+
+By default, almost every standard mathematical operation in PyTorch (like addition, multiplication, or subtraction) is **out-of-place**.
+
+* **Out-of-Place Operations:** When you write `z = x + y`, PyTorch allocates a **brand-new block of memory** in RAM (or VRAM) to store the result tensor `z`. The original tensors `x` and `y` remain completely untouched in their original memory locations.
+* **In-Place Operations:** These operations modify the existing tensor **directly in its current memory address** without allocating any new space.
+
+---
+
+## 2. How to Spot an In-Place Operation (The Underscore Rule)
+
+In PyTorch, the convention is simple and strict: **any operation that ends with an underscore (`_`) is an in-place operation**.
+
+Let’s look at the functional equivalents:
+
+* Out-of-place addition: `torch.add(x, y)` or `x + y`
+* In-place addition: `torch.add_(x, y)` or `x.add_(y)`
+
+---
+
+## 3. Code Example: Seeing the Memory Difference
+
+Let's write a small script to see how in-place operations modify data directly and preserve memory locations.
+
+```python
+import torch
+
+# Create a tensor
+x = torch.tensor([1.0, 2.0, 3.0])
+print("Initial memory address of x:", id(x))
+
+# 1. OUT-OF-PLACE OPERATION (+)
+# This creates a completely new tensor object in memory
+y = x + 10
+print("After out-of-place (x + 10):", y)
+print("Memory address of y (New!):", id(y))
+print("x is unchanged:", x)
+
+# 2. IN-PLACE OPERATION (_ suffix)
+# This modifies 'x' directly at its original memory location
+x.add_(10)
+print("\nAfter in-place (x.add_(10)):", x)
+print("Memory address of x (Unchanged!):", id(x))
+
+```
+
+---
+
+## 4. Common In-Place Methods in PyTorch
+
+Almost all standard operations have an in-place counterpart:
+
+| Standard (Out-of-Place) | In-Place Counterpart | Description |
+| --- | --- | --- |
+| `x + y` / `torch.add(x, y)` | `x.add_(y)` | Adds `y` to `x` in-place |
+| `x * y` / `torch.mul(x, y)` | `x.mul_(y)` | Multiplies `x` by `y` in-place |
+| `x - y` / `torch.sub(x, y)` | `x.sub_(y)` | Subtracts `y` from `x` in-place |
+| `x / y` / `torch.div(x, y)` | `x.div_(y)` | Divides `x` by `y` in-place |
+| `torch.abs(x)` | `x.abs_()` | Computes absolute values in-place |
+
+---
+
+## 5. Why Use In-Place Operations? (The Pros)
+
+* **Memory Efficiency:** If you are training massive deep learning models with gigabytes of parameters, avoiding unnecessary memory allocations saves valuable GPU VRAM and speeds up garbage collection.
+
+---
+
+## ⚠️ 6. The Danger Zone: Why You Must Be Careful (Crucial for Backpropagation)
+
+While in-place operations save memory, they are a **major hazard** during deep learning training loops because of **Autograd (Automatic Differentiation)**.
+
+* **The Problem:** Neural networks rely on saving intermediate tensor values computed during the *forward pass* to calculate gradients during the *backward pass* (backpropagation).
+* If an in-place operation modifies a tensor value *before* backpropagation finishes using it, PyTorch will throw a runtime error:
+> *`RuntimeError: a leaf Variable that requires grad has been used in an in-place operation.`*
+
+
+* **Rule of Thumb:** Avoid using in-place operations (`+=`, `add_()`, etc.) on tensors that require gradients (like model weights or intermediate activations) unless you know exactly what you are doing. They are generally safe to use during data preprocessing, loop counters, or non-gradient tracking phases.
