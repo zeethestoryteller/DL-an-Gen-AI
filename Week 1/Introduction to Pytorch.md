@@ -96,6 +96,11 @@ print(f"Test tensor successfully placed on: {x.device}")
 
 ---
 
-### 💡 Pro-Tip for Your Notebook:
+### 💡 Pro-Tip :
 
 Whenever you write code in PyTorch, try to define a `device` variable early on (like we did above). When you build large neural networks or load datasets, you can push them to `device` dynamically. That way, your code will seamlessly run on your laptop's CPU during testing and fly on a cloud GPU when you train heavy models!
+
+---
+
+
+
