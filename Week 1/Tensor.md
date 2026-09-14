@@ -1,6 +1,6 @@
 
 ---
-# MODULE NOTES: Tensor Generation & Basic Tensor Operations
+# 📚 MODULE NOTES: Tensor Generation & Basic Tensor Operations
 
 ## 1. What is a Tensor?
 
@@ -81,7 +81,7 @@ print("\nMatrix Multiplication Result:\n", matrix_product)
 
 ---
 
-## 2. Core Tensor Creation Methods
+### 5. Core Tensor Creation Methods
 
 Here are the primary ways you will initialize tensors when building deep learning models.
 
@@ -175,7 +175,7 @@ rand_like_tensor = torch.rand_like(base_tensor)
 
 ---
 
-## 3. Explicit Data Type (`dtype`) Specification
+## 6. Explicit Data Type (`dtype`) Specification
 
 By default, standard integer lists convert to 64-bit integers (`torch.int64`) and floating-point lists convert to 32-bit floats (`torch.float32` / `torch.float`). You can override this explicitly during creation to manage memory footprint:
 
@@ -199,6 +199,7 @@ bool_tensor = torch.tensor([True, False, True], dtype=torch.bool)
 5. **`*_like()` variants**: Shape-preserving shortcuts based on existing tensors.
 
 ---
+# 📚 MODULE NOTES: Random Tensor Generation 
 
 ## 1. Why Do We Need Random Tensors?
 
