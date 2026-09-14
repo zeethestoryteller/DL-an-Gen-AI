@@ -1,4 +1,4 @@
-# Pytorch and Numpy Integration
+# 1 Pytorch and Numpy Integration
 
 To conververt Numpy array too tensor:
 ```python
@@ -8,3 +8,6 @@ To convert tensor to numpy array;
 ```python
 .numpy()
 ```
+---
+# 2 Reproducibility in Pytorch
+
