@@ -1,6 +1,204 @@
 
 ---
-# MODULE NOTES: Random Tensor Generation & Basic Tensor Operations
+# MODULE NOTES: Tensor Generation & Basic Tensor Operations
+
+## 1. What is a Tensor?
+
+* **Definition:** A container for numerical data of any dimensionality (scalars, vectors, matrices, n-dimensional tensors).
+* **Key Attributes:** Every tensor has a specific shape (`shape`), data type (`dtype`), and device placement (`device`—CPU or GPU).
+---
+
+### 2. Understanding Tensors
+
+* **What is a Tensor?**
+* A tensor is a generalization of scalars, vectors, and matrices into arbitrary dimensions ($N$-dimensional arrays).
+* 0D Tensor = Scalar (single number)
+* 1D Tensor = Vector (array of numbers)
+* 2D Tensor = Matrix (table of numbers)
+* 3D+ Tensor = Higher-dimensional tensors (e.g., batch of RGB images: `[Batch, Channels, Height, Width]`)
+
+
+* **Core Difference from NumPy Arrays:** Tensors can track gradients (via `requires_grad=True`) and run on hardware accelerators (GPUs), whereas standard NumPy arrays are limited to CPU memory and lack automatic differentiation support.
+
+---
+
+### 3. Code Example: Creating and Inspecting Tensors in PyTorch
+
+Let's look at how we create tensors from scratch and check their properties like shape and data type:
+
+```python
+import torch
+
+# 1. Create a 1D tensor (Vector) from a list
+tensor_1d = torch.tensor([1.5, 2.0, 3.5])
+print("1D Tensor:", tensor_1d)
+
+# 2. Create a 2D tensor (Matrix) filled with zeros
+tensor_zeros = torch.zeros((2, 3))
+print("\n2D Zeros Matrix:\n", tensor_zeros)
+
+# 3. Create a tensor with random values drawn from a uniform distribution [0, 1)
+tensor_rand = torch.rand((3, 3))
+print("\nRandom Tensor (3x3):\n", tensor_rand)
+
+# 4. Check tensor metadata
+print("\n--- Tensor Properties ---")
+print("Shape:", tensor_rand.shape)
+print("Data Type:", tensor_rand.dtype)
+print("Device (CPU/GPU):", tensor_rand.device)
+
+```
+
+---
+
+### 4. Code Example: Basic Tensor Operations & Reshaping
+
+Deep learning models frequently manipulate tensor shapes (e.g., flattening an image or batching data). Here is how you can perform basic operations and reshape tensors:
+
+```python
+import torch
+
+# Create a tensor of numbers from 0 to 5
+x = torch.arange(6)
+print("Original 1D Tensor (x):", x)
+print("Shape of x:", x.shape)
+
+# Reshape 1D tensor into a 2D matrix (2 rows, 3 columns)
+x_reshaped = x.view(2, 3)
+print("\nReshaped Tensor (2x3):\n", x_reshaped)
+
+# Element-wise operations
+y = torch.tensor([[1, 2, 3], [4, 5, 6]])
+z = x_reshaped + y  # Element-wise addition
+print("\nElement-wise Addition (x_reshaped + y):\n", z)
+
+# Matrix Multiplication (Dot Product)
+# Transpose y to match shapes: (2, 3) @ (3, 2) -> (2, 2)
+matrix_product = torch.matmul(x_reshaped, y.T)
+print("\nMatrix Multiplication Result:\n", matrix_product)
+
+```
+
+---
+
+## 2. Core Tensor Creation Methods
+
+Here are the primary ways you will initialize tensors when building deep learning models.
+
+### A. From Existing Python Data (`torch.tensor` vs `torch.as_tensor`)
+
+You can convert lists, tuples, or nested collections directly into tensors.
+
+```python
+import torch
+
+# 1D Tensor (Vector)
+vector_tensor = torch.tensor([1, 2, 3])
+
+# 2D Tensor (Matrix)
+matrix_tensor = torch.tensor([[1, 2], [3, 4]])
+
+```
+
+> **Teaching Tip:** `torch.tensor()` always *copies* the data. If you want to avoid unnecessary memory copies when working with existing NumPy arrays, look into `torch.from_numpy()` or `torch.as_tensor()`.
+
+---
+
+### B. Initializing with Pre-defined Shapes (Zeros, Ones, and Constants)
+
+Often, you need to set up structural placeholders or weights initialized to a constant value before training begins.
+
+```python
+# Create a tensor filled entirely with zeros (useful for biases or padding masks)
+zeros_tensor = torch.zeros((2, 3))  # Shape: 2 rows, 3 columns
+
+# Create a tensor filled entirely with ones
+ones_tensor = torch.ones((3, 3))
+
+# Create a tensor filled with a specific scalar value (e.g., filling with 7)
+full_tensor = torch.full((2, 2), fill_value=7.0)
+
+```
+
+---
+
+### C. Identity and Sequence Tensors
+
+Useful for indexing, linear algebra operations, or creating sequential time steps.
+
+```python
+# Identity Matrix (Square matrix with ones on the main diagonal)
+identity_matrix = torch.eye(3)  # 3x3 identity matrix
+
+# Sequence of numbers (similar to Python's range or NumPy's arange)
+seq_tensor = torch.arange(start=0, end=10, step=2)  # tensor([0, 2, 4, 6, 8])
+
+# Evenly spaced numbers over a specified interval (great for plotting curves/activation inputs)
+lin_tensor = torch.linspace(start=0, end=1, steps=5)  # tensor([0.0000, 0.2500, 0.5000, 0.7500, 1.0000])
+
+```
+
+---
+
+### D. Random Tensor Generation (Crucial for Weight Initialization)
+
+Neural network weights must be randomized initially to break symmetry during training.
+
+```python
+# Uniform distribution between [0, 1)
+rand_tensor = torch.rand((2, 3))
+
+# Normal (Gaussian) distribution with mean=0 and variance=1 (Standard Normal)
+randn_tensor = torch.randn((2, 3))
+
+# Random integers within a specific range [low, high)
+randint_tensor = torch.randint(low=0, high=10, size=(3, 3))
+
+```
+
+---
+
+### E. "Like" Methods (Copying Shape & Properties)
+
+If you have an existing tensor and want to create a new one with the **same shape** (and optionally the same data type or device) without manually typing out dimensions:
+
+```python
+base_tensor = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+
+# Creates a zero-filled tensor with the exact same shape and dtype as base_tensor
+zeros_like_tensor = torch.zeros_like(base_tensor)
+
+# Creates a randomly populated tensor matching the shape of base_tensor
+rand_like_tensor = torch.rand_like(base_tensor)
+
+```
+
+---
+
+## 3. Explicit Data Type (`dtype`) Specification
+
+By default, standard integer lists convert to 64-bit integers (`torch.int64`) and floating-point lists convert to 32-bit floats (`torch.float32` / `torch.float`). You can override this explicitly during creation to manage memory footprint:
+
+```python
+# Creating a double-precision (64-bit float) tensor
+double_tensor = torch.tensor([1.5, 2.5], dtype=torch.float64)
+
+# Creating a boolean mask tensor
+bool_tensor = torch.tensor([True, False, True], dtype=torch.bool)
+
+```
+
+---
+
+## Quick Summary Checklist for Your Notebook:
+
+1. **`torch.tensor()`**: General creation from data (copies memory).
+2. **`torch.zeros()` / `torch.ones()` / `torch.full()**`: Constant structural fillers.
+3. **`torch.arange()` / `torch.linspace()**`: Sequence generation.
+4. **`torch.rand()` / `torch.randn()**`: Stochastic distributions for model weights.
+5. **`*_like()` variants**: Shape-preserving shortcuts based on existing tensors.
+
+---
 
 ## 1. Why Do We Need Random Tensors?
 
