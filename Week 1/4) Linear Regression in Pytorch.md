@@ -167,12 +167,223 @@ plt.scatter(X_test, y_preds.cpu(), c="r", s=10, label="Predictions")
 plt.legend()
 plt.show()
 ```
-
-## Mental model / cheat sheet
+#
+### Mental model / cheat sheet
 
 - **`TensorDataset`** = pairs X and y so they index together
 - **`DataLoader`** = iterates a dataset in batches, optionally shuffled/parallel
 - **`shuffle=True`** for train, **`shuffle=False`** for test/eval
 - **`batch_size`** = how many samples per gradient update (8 here; 32/64/128 common in practice)
 - **Full loop per epoch**: `model.train()` → forward → loss → `zero_grad()` → `backward()` → `step()`, then optionally `model.eval()` + `torch.inference_mode()` to check test loss
+
+---
+# Plotting Routine for Linear Regression — Learning Guide (Part 2)
+
+This continues from the data-loading guide. Here's the `plot_predictions()` function the video walks through, reconstructed from what's described, plus notes on how each parameter behaves.
+
+## The `plot_predictions()` function
+
+```python
+import matplotlib.pyplot as plt
+
+def plot_predictions(train_data=X_train,
+                      train_labels=y_train,
+                      test_data=X_test,
+                      test_labels=y_test,
+                      predictions=None):
+    """
+    Plots training data, test data, and (optionally) model predictions.
+    """
+    plt.figure(figsize=(10, 7))
+
+    # Training data — green
+    plt.scatter(train_data, train_labels,
+                c="g", s=25, alpha=1.0,
+                label="Training data", marker="o")
+
+    # Test data — blue
+    plt.scatter(test_data, test_labels,
+                c="b", s=25, alpha=1.0,
+                label="Testing data", marker="o")
+
+    # Predictions — red, only if provided
+    if predictions is not None:
+        plt.scatter(test_data, predictions,
+                    c="r", s=25, alpha=0.8,
+                    label="Predictions", marker="s")
+
+    plt.xlabel("X", fontsize=12)
+    plt.ylabel("Y", fontsize=12)
+    plt.title("Linear Regression", fontsize=16, fontweight="bold")
+    plt.legend(prop={"size": 12})
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+```
+
+## Parameter-by-parameter breakdown
+
+| Parameter | What it controls | Notes from the video |
+|---|---|---|
+| `train_data` / `train_labels` | X and Y for the scatter's positions | Default to `X_train`, `y_train` so you can call the function with no args |
+| `test_data` / `test_labels` | Same, for test set | Default to `X_test`, `y_test` |
+| `predictions` | Model output for `X_test` | Defaults to `None` — the function only plots red prediction points **if** you pass something in |
+| `c` | Marker color | Green for train, blue for test, red for predictions — an easy visual convention: two "true" data colors + one "model output" color |
+| `s` | Marker size | `25` is a reasonable default; the video demoed bumping it to `45` to make markers much larger — purely cosmetic, doesn't affect the model |
+| `alpha` | Transparency (`0`=invisible, `1`=fully opaque) | Useful when scatter plots overlap — e.g. lowering test data's alpha so predictions plotted on top of it remain clearly visible |
+| `marker` | Shape of the plotted points | `"o"` (circle) for data, `"s"` (square) worked well as a visual differentiator for predictions — any valid matplotlib marker works |
+| `label` | Text shown in the legend | Must be set for `plt.legend()` to display anything meaningful |
+| `plt.grid(alpha=...)` | Background grid | Also has its own transparency control, independent of marker alpha |
+| `plt.tight_layout()` | Auto-adjusts spacing | Prevents labels/titles from getting clipped |
+| `plt.show()` | Actually renders the figure | **Required** — without it, in many environments (like plain scripts) nothing displays |
+
+## Using it — before training (sanity check)
+
+```python
+plot_predictions()  # just shows train (green) vs test (blue), no predictions yet
+```
+
+## Using it — after training (the payoff)
+
+Once you have a trained model (from Part 1 of this guide):
+
+```python
+model.eval()
+with torch.inference_mode():
+    y_preds = model(X_test.to(device))
+
+plot_predictions(predictions=y_preds.cpu())
+```
+
+If the model learned well, the **red squares** (predictions) should land almost exactly on top of the **blue circles** (true test data).
+
+## Experimenting, as shown in the video
+
+Try these tweaks yourself to build intuition:
+
+```python
+# Make test data markers huge and predictions barely visible on top:
+plt.scatter(test_data, test_labels, c="b", s=45, alpha=0.3, label="Testing data")
+plt.scatter(test_data, predictions, c="r", s=45, alpha=1.0, label="Predictions")
+```
+
+This kind of alpha/size play is purely about **readability when points overlap** — a bigger, more opaque "Predictions" layer on top of a smaller, more transparent "Testing data" layer makes it easy to see how closely predictions track ground truth.
+
+> load data → build model → train → **visualize with this function**. 
+
+---
+
+# Defining the Linear Regression Model in PyTorch — Learning Guide (Part 3)
+
+This part covers the actual model class, built manually with `nn.Parameter` (the "from scratch" way, as opposed to just using `nn.Linear` — both are valid, and it's worth understanding this version since it shows you what's happening under the hood).
+
+## Imports
+
+```python
+import torch
+from torch import nn
+```
+
+- `torch` — core tensor library
+- `torch.nn` — PyTorch's toolkit for building neural network models (layers, parameters, loss functions)
+
+## The model class
+
+```python
+class LinearRegressionModel(nn.Module):
+    """
+    Linear Regression Model: y = weight * x + bias
+
+    Input: univariate (1 feature per sample)
+    Output: 1 prediction per sample
+    Parameters: weight, bias
+    """
+    def __init__(self):
+        super().__init__()
+        self.weights = nn.Parameter(
+            torch.randn(1, dtype=torch.float),
+            requires_grad=True
+        )
+        self.bias = nn.Parameter(
+            torch.randn(1, dtype=torch.float),
+            requires_grad=True
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.weights * x + self.bias
+```
+
+## Why each piece matters
+
+| Piece | Purpose |
+|---|---|
+| `class LinearRegressionModel(nn.Module)` | Every custom PyTorch model **must** inherit from `nn.Module` — this gives you parameter tracking, `.parameters()`, GPU-moving (`.to(device)`), saving/loading, and autograd integration for free |
+| `super().__init__()` | Calls `nn.Module`'s constructor. **Skip this and your parameters won't get registered** — meaning no gradients, no training. Always the first line in `__init__` |
+| `nn.Parameter(...)` | Wraps a tensor and tells PyTorch "this is a learnable parameter — track it, include it in `.parameters()`, update it during optimization" |
+| `torch.randn(1, dtype=torch.float)` | Initializes the parameter with a random value drawn from a standard normal distribution — training will nudge this toward the true value over time |
+| `requires_grad=True` | Tells autograd to compute gradients for this tensor during backpropagation (this is somewhat redundant with `nn.Parameter`, which sets it automatically, but it's explicit here) |
+| `forward(self, x)` | Defines **how input flows through the model** — i.e., how you compute `y` from `x`. This is the one method every `nn.Module` subclass must implement |
+
+**Key relationship:** `nn.Module` (the parent class) handles backprop, parameter bookkeeping, and training-loop integration automatically — as long as you (1) call `super().__init__()` and (2) register parameters via `nn.Parameter`.
+
+## Using the model
+
+```python
+torch.manual_seed(42)   # for reproducible random init — optional but good practice
+model = LinearRegressionModel()
+
+# See the randomly initialized parameters
+print(list(model.parameters()))
+print(model.state_dict())
+```
+
+### Running a prediction (inference)
+
+```python
+x = torch.tensor([[1.0], [2.0], [3.0]])   # shape [3, 1] — 3 samples, 1 feature
+print(x, x.shape)
+
+y_pred = model(x)   # calling model(x) automatically runs model.forward(x)
+print(y_pred)
+```
+
+At this point, predictions are **random and meaningless** — because `weights` and `bias` are still randomly initialized. Training is exactly the process of adjusting them so predictions match reality.
+
+## A note on `model(x)` vs `model.forward(x)`
+
+Always call `model(x)`, not `model.forward(x)` directly. `nn.Module.__call__` does extra bookkeeping (hooks, etc.) before invoking `forward()` — calling `forward()` directly skips that.
+
+## Connecting to Part 1 (data pipeline)
+
+If you built the `DataLoader`s from the earlier guide, you can already sanity-check the model on a real batch:
+
+```python
+for batch_X, batch_y in train_dataloader:
+    preds = model(batch_X)
+    print(preds.shape, batch_y.shape)   # should match: [8, 1] and [8, 1]
+    break
+```
+
+## Manual vs. `nn.Linear` — worth knowing
+
+The video builds weight/bias by hand for teaching purposes. In practice, for a simple linear layer you'd normally just write:
+
+```python
+class LinearRegressionModelV2(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear = nn.Linear(in_features=1, out_features=1)
+
+    def forward(self, x):
+        return self.linear(x)
+```
+
+`nn.Linear` does exactly the same `weight * x + bias` computation internally, but is the standard, battle-tested building block you'll reuse for every larger model (it generalizes cleanly to multiple input/output features). Understanding the manual version first is exactly why this lesson is valuable — it demystifies what `nn.Linear` is doing for you.
+
+---
+
+
+
+
+
 
