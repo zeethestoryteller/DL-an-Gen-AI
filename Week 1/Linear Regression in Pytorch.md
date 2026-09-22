@@ -1,8 +1,8 @@
 # PyTorch Univariate Linear Regression — Learning Guide
 
 This walks through everything in the transcript, organized into clear steps with working code. I've filled in the parts that were implied but not fully typed out, and added the pieces you'll need next (model, training loop) since the video sets those up.
-
-## 1. Setup
+#
+### a. Setup
 
 ```python
 import torch
@@ -17,8 +17,8 @@ print(device)
 
 - `nn` holds PyTorch's neural network building blocks (layers, loss functions, etc.)
 - Checking CUDA tells you whether training will run on GPU (fast) or CPU (fine for this toy problem, but good habit for later)
-
-## 2. Define the "ground truth" and generate synthetic data
+#
+### b. Define the "ground truth" and generate synthetic data
 
 The whole point of a toy problem is that *you* know the real weight and bias, so you can check whether the model learns them correctly.
 
@@ -41,8 +41,8 @@ print(X.shape, y.shape)
 X[:10]   # first 10 rows, all columns
 X[10:]   # from row 10 to the end
 ```
-
-## 3. Train/test split
+#
+### c. Train/test split
 
 ```python
 train_split = int(0.8 * len(X))   # 40
@@ -54,8 +54,8 @@ len(X_train), len(X_test)   # 40, 10
 ```
 
 This is a **sequential** split, not a random one — fine for this ordered synthetic data, but for real datasets you'd usually shuffle first (e.g. `sklearn.model_selection.train_test_split`) to avoid any ordering bias, while still making sure train/test never overlap.
-
-## 4. Wrap the data: `TensorDataset` + `DataLoader`
+#
+### d. Wrap the data: `TensorDataset` + `DataLoader`
 
 ```python
 from torch.utils.data import TensorDataset, DataLoader
@@ -100,8 +100,8 @@ for batch_X, batch_y in train_dataloader:
     break
 ```
 `.flatten()` just reshapes `[8,1]` → `[8]` for easier reading — it's cosmetic, not required for training.
-
-## 5. What comes next (not yet in this transcript, but the natural next steps)
+#
+### e. What comes next (not yet in this transcript, but the natural next steps)
 
 Since the video stops right before modeling, here's the rest of the standard PyTorch workflow so you have the full picture:
 
@@ -175,4 +175,3 @@ plt.show()
 - **`batch_size`** = how many samples per gradient update (8 here; 32/64/128 common in practice)
 - **Full loop per epoch**: `model.train()` → forward → loss → `zero_grad()` → `backward()` → `step()`, then optionally `model.eval()` + `torch.inference_mode()` to check test loss
 
-If you want, I can turn this into a runnable Jupyter notebook (.ipynb) or a Python script file you can download and run directly — just say the word.
