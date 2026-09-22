@@ -102,7 +102,7 @@ for batch_X, batch_y in train_dataloader:
 ```
 `.flatten()` just reshapes `[8,1]` → `[8]` for easier reading — it's cosmetic, not required for training.
 #
-### e. What comes next (not yet in this transcript, but the natural next steps)
+### e. What comes next 
 
 Since the video stops right before modeling, here's the rest of the standard PyTorch workflow so you have the full picture:
 
