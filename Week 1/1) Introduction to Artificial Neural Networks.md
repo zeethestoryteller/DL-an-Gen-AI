@@ -1,9 +1,5 @@
 ## 📝 Lecture Notes: 1.1 Introduction to Artificial Neural Networks
 
-**Course:** [IIT Madras - B.S. Degree Programme](https://www.youtube.com/watch?v=Z7t12UH0cyY&list=PLZ2ps__7DhBa9hqi20allqocTSUUt3nWX&index=1)
-
-**Topic:** Introduction to Machine Learning, Terminologies, Limitations, and Artificial Neural Networks (ANNs)
-
 ---
 
 ### 1. Overview of Machine Learning (ML)
