@@ -86,7 +86,8 @@ test_dataloader = DataLoader(
 | `TensorDataset(X, y)` | Pairs each input row with its label so you can index/iterate them together instead of managing two tensors separately |
 | `DataLoader` | Wraps a dataset and gives you an iterator that yields **batches** |
 | `shuffle=True` (train only) | Randomizes sample order each epoch → prevents the model from learning spurious order patterns |
-| `num_workers` | How many subprocesses load data in parallel; `0` keeps it single-threaded/simple |
+| `num_workers` | How many subprocesses(halper) load data in parallel; `0` keeps it single-threaded/simple |
+|`batch_size`| Decides:in how many parts the data will be devided|
 
 **Check what you built:**
 ```python
