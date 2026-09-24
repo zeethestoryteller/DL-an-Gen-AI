@@ -254,7 +254,12 @@ with torch.inference_mode():
 
 plot_predictions(predictions=y_preds.cpu())
 ```
-
+| Parameter | What it controls |
+|---|---|
+|`model.eval()`|During training, certain layers behave differently to help the model learn. Tells these layers to stop training behaviors and act deterministically|
+|`torch.inference_mode()`| turns off gradient tracking (autograd) behind the scenes, saving memory and making predictions faster since PyTorch no longer needs to keep track of the math required for backpropagation.|
+|`.to(device)`|command moves your data (in this case, the X_test tensor) to a specific hardware device in which model is running, usually either your CPU or a GPU.|
+|`.cpu()`| Matplotlib aur NumPy GPU par rakhe data ko directly read nahi kar sakte. Unhe data hamesha CPU par chahiye hota hai. `.cpu()` predictions ko cpu memory me lata hai|
 If the model learned well, the **red squares** (predictions) should land almost exactly on top of the **blue circles** (true test data).
 
 ## Experimenting, as shown in the video
