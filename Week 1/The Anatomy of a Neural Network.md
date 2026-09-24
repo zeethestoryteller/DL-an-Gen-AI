@@ -1,10 +1,11 @@
 # The Anatomy of a Neural Network
 
 
+### From Biology to Mathematics 
 This section tells one story: how a rough idea from biology turned into the mathematical neuron used in every modern neural network. It goes in four steps.
 
 **Brain neuron → McCulloch-Pitts (1943) → Perceptron (1958) → Modern neuron**
-
+#
 
 ### 1. Inspiration from the brain
 
@@ -110,6 +111,7 @@ Then a = g(−1), whichever activation function g you choose.
 **One sentence to remember:** every neuron in a deep network does the same two steps, **weighted sum plus bias, then a smooth non-linear activation**, and it is smooth so that gradients can flow and the network can learn.
 
 ---
+### Fundamental Tricks in Deep Learning 
 Its main idea is that deep learning takes a real-world problem and turns it into a math problem a computer can solve. It does this with a chain of "tricks":
 
 **Turn everything into numbers → Treat the solution as a function → Give the function tunable dials → Measure the error and find the best dials**
@@ -227,7 +229,8 @@ It is "high-dimensional" because real networks have millions or billions of para
 **One sentence to remember:** turn everything into numbers, model the solution as a function with adjustable dials (θ), score its mistakes with a loss, and then hunt for the dial settings that make the loss smallest.
 
 ---
-This section covers slides 30 to 37. Earlier you learned what a single neuron does. Here we connect many neurons into a network and see how a whole layer is computed.
+### Network ArchitecturesThis 
+Earlier you learned what a single neuron does. Here we connect many neurons into a network and see how a whole layer is computed.
 
 #
 
@@ -360,7 +363,8 @@ The slide's picture shows this: in the **original space** the two classes can't 
 **One sentence to remember:** a neural network is layers of neurons where each layer computes z = Wa + b, then a = g(z), and the hidden layers reshape the data until the problem becomes easy.
 
 ---
-This section covers slides 38 to 48 and finishes Chapter 2, "The Anatomy of a Neural Network". It answers two questions: why do neurons need an activation function at all, and which one should you use?
+### Activation Functions: Introducing Non-Linearity
+"The Anatomy of a Neural Network". It answers two questions: why do neurons need an activation function at all, and which one should you use?
 
 #
 
