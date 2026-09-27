@@ -1,109 +1,141 @@
-# word embeddings, the foundation you need before attention and transformers.
+# Word Embeddings 
 
-## 1. The problem: words as plain numbers don't work
-
-Earlier in the course, each word got turned into a single number (an index) — "the" = 1, "cat" = 45, etc. This worked as *input* to an RNN, but it has a big flaw:
-
-A computer sees "happy" = 37 and "sad" = 812. Those numbers tell it nothing about the fact that happy and sad are opposites, or that "delighted" is basically the same idea as "happy." Meaning (semantics) just isn't there in a single scalar number.
-
-**Core idea:** humans understand words by their *relationships* to other words. Machines need a representation that captures that.
-
-## 2. The fix: represent each word as a vector, not a number
-
-Instead of "cat" = 45, we say "cat" = `[0.2, -0.7, 1.3, ..., 0.05]` — a list of, say, 200 numbers. This is a **word embedding**.
-
-- Every word in the vocabulary gets its own unique vector.
-- You choose the length of this vector (the "embedding size" or "embedding dimension") — e.g., 200.
-- Think of these 200 numbers as 200 "hidden categories" the model can use to describe meaning — though we never manually define what those categories are. The model figures that out itself during training.
-
-**Why this matters:** with vectors, you can measure *distance* between words. Words with similar meaning end up with similar vectors (small distance between them). Words with unrelated meanings end up far apart.
-
-## 3. Semantic geometry: meaning as space
-
-If embeddings are trained well, something remarkable happens automatically:
-
-- `cat` and `dog` vectors are close together (both are pets/animals).
-- `car` is far away from both (unrelated concept).
-- Clusters form naturally: animals together, vehicles together, fruits together — without you ever telling the model "these are animals."
-
-Even more strikingly, **vector arithmetic captures relationships**:
-
-```
-embedding(king) - embedding(man) + embedding(woman) ≈ embedding(queen)
-embedding(India) - embedding(New Delhi) + embedding(France) ≈ embedding(Paris)
-```
-
-This is emergent — nobody programs this rule in. It just falls out of training on enough text. This famous demonstration is from the original **word2vec** paper (~2013).
-
-## 4. How embeddings get learned: "a word is known by the company it keeps"
-
-This is the central training philosophy. The model doesn't know what any word *means*. It only looks at **which words tend to appear near each other** in huge amounts of text.
-
-- "My pet is a cat" and "My pet is a dog" occur often → "pet" gets pulled close to both "cat" and "dog" in vector space.
-- "My pet is a car" basically never occurs → "car" stays far from "pet."
-- Over many billions of sentences, these co-occurrence patterns statistically shape the vectors so that related words end up near each other.
-
-This is done through gradient descent, repeated over a massive text corpus — no one hand-labels any of this.
-
-**Classic algorithms that do this:** Word2Vec, GloVe, FastText. These produce *static* embeddings — one fixed vector per word.
-
-## 5. The limitation of static embeddings: one word, multiple meanings
-
-Problem: "bank" in "river bank" and "bank" in "money bank" are totally different meanings, but a static embedding gives "bank" the exact same vector every time. The model can't tell them apart.
-
-## 6. The fix: contextual embeddings (BERT and GPT)
-
-Modern models generate a **different embedding for the same word depending on its surrounding context** (the sentence it's in).
-
-- **BERT** (bidirectional): reads the whole sentence — both the words before *and* after the target word — before deciding on its embedding. Like a bidirectional RNN/LSTM.
-- **GPT** (autoregressive): only reads the words *before* the target word (left-to-right), then decides the embedding. This matters later for why GPT is good at generating text one word at a time.
-
-So "bank" near "river" gets one vector, and "bank" near "money" gets a different vector — even though it's the same word in the dictionary.
-
-## 7. How embeddings are actually trained in practice
-
-1. **Initialize randomly**: for every word in the vocabulary, create a vector of your chosen size (e.g., 200) filled with small random numbers.
-2. **Feed into a task**: pass these embedding vectors as input to a neural network that does some task — sentiment analysis, or (more powerful) predicting the next word in a sentence.
-3. **Backpropagate**: when the network makes an error, gradients flow all the way back through the network *and into the embedding vectors themselves*. So the embeddings get updated right alongside the network's weights.
-4. **Repeat over huge amounts of text**: the more data and the harder the task (e.g., "predict the next word" over the whole internet), the richer and more meaningful the embeddings become.
-
-This is why GPT/Gemini-style models need so much data — they aren't told any meaning directly; they infer everything purely from which words appear near which other words, across billions of examples.
-
-## Implementing this yourself
-
-Here's the minimal, concrete version of what's described, in PyTorch:
-
-```python
-import torch
-import torch.nn as nn
-
-vocab_size = 10000      # number of unique words
-embedding_dim = 200     # size of each word's vector
-
-# Step 1: random initialization of every word's vector
-embedding_layer = nn.Embedding(vocab_size, embedding_dim)
-
-# Step 2: turn a sentence (as indices) into embeddings
-# e.g. "the cat" -> [1, 45]
-word_indices = torch.tensor([1, 45])
-word_vectors = embedding_layer(word_indices)   # shape: [2, 200]
-
-# Step 3: feed word_vectors into your RNN / next-word-predictor / classifier
-# During training.backward(), gradients update embedding_layer.weight too
-# — this is how the vectors "learn" meaning over time.
-```
-
-- `embedding_layer.weight` is literally the big table of vectors — one row per word.
-- If you train this jointly with a next-word-prediction task on a lot of text, you're doing a simplified version of word2vec/GPT-style embedding training.
-- If you don't want to train your own, you can just download **pretrained** embeddings (GloVe, word2vec, or a pretrained BERT/GPT model) and use those vectors directly — that's what most real projects do.
-
-To check that your embeddings "worked," measure cosine similarity between vector pairs:
-
-```python
-import torch.nn.functional as F
-
-sim = F.cosine_similarity(word_vectors[0], word_vectors[1], dim=0)
-# high similarity = words are semantically close
-```
 ---
-The idea that once you have these embeddings, you need a mechanism for each word to "look at" other relevant words in the sentence (like GPT looking left, or BERT looking both directions) to build a smarter, context-aware representation. That's the next lecture in this sequence, and it's the direct ancestor of the Transformer architecture ("T" in GPT).
+
+## 1. The Problem: Words as Plain Numbers
+
+Pehle jo approach thi usme har word ko ek single index diya jata tha:
+`the → 1`, `a → 2`, aur aage bhi is tarah.
+
+Yeh kaam to karta hai, lekin **meaning (semantics)** poori tarah missing ho jaati hai:
+
+- Computer ko nahi pata ki "happy" "sad" ka opposite hai, ya "delighted" ke similar hai — uske liye woh sirf ek number hai.
+- Insaan meaning ke through sochte hain: synonyms, opposites, categories — scalar (single number) representation isko capture nahi kar sakta.
+- Isi missing structure ko **semantics** kehte hain.
+
+---
+
+## 2. Embeddings Aren't Just for Words (Image Analogy)
+
+Yeh concept naya nahi hai — CNNs me bhi hum yehi dekh chuke hain:
+
+```
+256 × 256 image  →  [CNN layers]  →  200 × 1 embedding vector
+```
+
+Poori image (lakhs of pixels) ko end me ek chhota vector (jaise 200 numbers) me compress kar diya jaata hai — yeh vector image ka "essence" capture karta hai. Word embeddings bhi bilkul yehi cognitive idea replicate karte hain, bas text ke liye.
+
+---
+
+## 3. What is a Word Embedding?
+
+Ek single number ki jagah, har word ko ek **list of numbers (vector)** diya jaata hai.
+
+```
+king → [0.62, -0.11, 0.94, ... ]   (e.g. 200 numbers)
+```
+
+- Vocabulary ke har word ka apna **unique vector** hota hai — koi do words same vector share nahi karte.
+- Isko word ka "address" samajh sakte ho — jaise address me multiple pieces of info hoti hain (city, street, pin code), waise hi vector me multiple features hoti hain.
+- Numbers ki count (e.g. 200) ko **embedding size / dimension** kehte hain.
+
+---
+
+## 4. The Key Property: Similarity = Distance
+
+> "Words with similar meanings will have similar vectors, and the distance between two vectors tells us how similar the words are."
+
+**Example (2-D toy embedding):**
+
+| Word | Vector |
+|------|--------|
+| cat  | (1, 2) |
+| dog  | (1.5, 2.5) |
+| car  | (-0.3, 1.5) |
+
+Yahan `cat` aur `dog` ke vectors close hain, jabki `car` unse door hai — exactly jaisa expect karte hain.
+
+Yeh structure **hand-designed nahi hota** — training ke through automatically emerge hota hai, jab model ko bohot zyada text diya jaata hai.
+
+---
+
+## 5. The "Magic": Clustering & Vector Arithmetic
+
+**Clustering:** Embeddings ko plot karo to bina kisi explicit instruction ke:
+- cat, dog, pet — ek cluster
+- car, truck, bus — dusra cluster
+- apple, orange, banana — teesra cluster
+
+**Analogies (word2vec, 2013):**
+
+```
+king − man + woman ≈ queen
+India − New Delhi + France ≈ Paris
+```
+
+Agar yehi cheez scalar IDs (jaise `10 − 23 + 45`) se try karo, to kuch meaningful nahi milega. Sirf vectors hi yeh relational structure capture karte hain.
+
+---
+
+## 6. Training: How Are Embeddings Learned?
+
+> "A word is known by the company it keeps."
+
+- Billions of words books, articles, websites se feed karte hain.
+- **Co-occurrence** dekha jaata hai — kaunsa word kiske paas aata hai. "Cat" aur "dog" dono often "pet" ke paas aate hain → unke vectors close ho jaate hain training ke dauraan.
+- Statistical roots is idea ke **unigram, bigram, trigram** jaisi cheezon me hain (context window me kaunsa word kis word ke saath sath occur karta hai) — lekin deep learning me yeh sirf pure statistics nahi, gradient descent se aur sophisticated tareeke se seekha jaata hai.
+- Classic algorithms: **word2vec**, **GloVe**, **fastText**.
+
+**Training kaise hota hai (step by step):**
+
+1. Har word ke liye ek random vector se initialize karo (embedding size, jaise 200, fix karke). E.g. `the → [-0.126, 0.26, ...]`, `a → [-0.6, -0.3, 0.85, ...]`.
+2. Yeh embedding ek network me input jaati hai jo koi specific task solve karta hai — jaise sentiment analysis, ya next-word prediction.
+
+```
+word → embedding (E) → Neural Network (N1, N2, ...) → prediction (task output)
+```
+
+3. Task ka feedback (loss) aata hai, aur **backpropagation** poore path se hoti hai — sirf network weights (N1, N2) hi update nahi hote, balki embedding vector khud bhi update hota hai.
+4. Repeat karte raho (gradient descent) — jitna sophisticated task aur jitna wide corpus, utne behtar embeddings emerge karte hain.
+
+**Note on softmax (context ka reference):** Jab bhi hum "context ko dekhna" discuss karte hain, professor ne softmax ka comparison diya — sigmoid sirf apne khud ke input pe depend karta hai, lekin softmax teeno (ya sabhi) values ko dekh ke decide karta hai:
+
+$$
+\text{softmax}(z_1) = \frac{e^{z_1}}{e^{z_1} + e^{z_2} + e^{z_3}}
+$$
+
+Yehi philosophy contextual embeddings me bhi lagti hai — ek word ka vector sirf usi word pe nahi, balki **surrounding words (context)** pe bhi depend karta hai. Jitna zyada left-right dekh sakte ho, utna bada **context length**.
+
+---
+
+## 7. A Limitation: Contextual Embeddings (BERT vs GPT)
+
+Classic embeddings **fixed** hote hain — "bank" ka ek hi vector hota hai, chahe uska matlab *river bank* ho ya *money bank*. Yeh problem hai.
+
+| Model | Approach |
+|-------|----------|
+| **BERT** | Bidirectional — poora sentence padhta hai, left aur right dono taraf, embedding banane se pehle (jaise bidirectional LSTM/RNN). |
+| **GPT** | Sirf left-to-right padhta hai — jo pehle aaya hai, usी tak se embedding banata hai. |
+
+**Notation (jaisa lecture me use hua):**
+
+```
+bank (river context)  → embedding E1
+bank (money context)  → embedding E2
+```
+
+Agar bank ka context "money" (E3) ho, to uska embedding E2 nahi balki E2′ (E2-prime) hoga — matlab **same word, different sentence → different vector**. Yehi contextual embedding ka core idea hai, aur yeh sabhi modern LLMs (BERT, GPT) me hota hai.
+
+Result: "bank" ka embedding surrounding words (context) ke hisaab se change hota hai.
+
+---
+
+## 8. Recap
+
+- Words ko **vectors** banaya jaata hai, single numbers nahi, taaki meaning encode ho sake.
+- Similar words → nearby vectors; distance ≈ semantic similarity.
+- Bade text corpora se co-occurrence ke through automatically learn hote hain — kabhi hand-coded nahi hote.
+- Emergent behavior: clustering aur analogy arithmetic (king − man + woman ≈ queen).
+- Modern models (BERT, GPT) embeddings ko **contextual** banate hain — same word alag sentences me alag vector leta hai.
+
+**Next in course:** Embeddings akele kaafi kyun nahi hain → **Attention mechanism** → **Transformers**.
