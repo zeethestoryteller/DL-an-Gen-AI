@@ -159,7 +159,7 @@ Once everything is numbers, the problem takes this shape:
 2. The **solution** is a **function** that maps inputs to outputs.
 3. The **learning task** is to **find this function**.
 
-A useful example from the slides: **ChatGPT is one massive function.** Your prompt goes in and the reply comes out.
+A useful example: **ChatGPT is one massive function.** Your prompt goes in and the reply comes out.
 
 ### Every function has two parts
 
@@ -171,7 +171,7 @@ A useful example from the slides: **ChatGPT is one massive function.** Your prom
 - These are the "dials" that tune the function.
 - They are learned automatically from data.
 
-**Example (my own):** for the function y = w·x + b, the form is "a straight line". The parameters are the numbers w and b that decide which straight line it is.
+**Example:** for the function y = w·x + b, the form is "a straight line". The parameters are the numbers w and b that decide which straight line it is.
 
 #
 
@@ -243,7 +243,7 @@ A feedforward network is built from three kinds of layers.
 
 **2. Hidden layers**
 - These are the network's **computational engine**.
-- They learn **increasingly abstract features**. For an image, early layers might pick up simple things like edges and later layers more complex shapes. (This example is mine, not from the slides.)
+- They learn **increasingly abstract features**. For an image, early layers might pick up simple things like edges and later layers more complex shapes.
 
 **3. Output layer**
 - It produces the **final result**, such as a prediction.
@@ -298,11 +298,11 @@ Compute an **entire layer at once** using **vectorized operations**, meaning **m
 
 This is efficient and is **perfectly suited for GPUs**, which are built to do matrix math in parallel.
 
-**Shape tip (my own):** W[l] has one row per neuron in the current layer and one column per neuron in the previous layer. For 2 inputs going into 3 neurons, W is 3×2.
+**Shape tip:** W[l] has one row per neuron in the current layer and one column per neuron in the previous layer. For 2 inputs going into 3 neurons, W is 3×2.
 
 #
 
-## 5. Worked example (from the slides)
+## 5. Worked example
 
 A hidden layer with **3 neurons** receives input from **2 neurons**, and the activation is **ReLU: g(z) = max(0, z)**.
 
@@ -345,7 +345,7 @@ Recall that a single perceptron **fails on non-linear data**, such as XOR. The h
 
 The slide's picture shows this: in the **original space** the two classes can't be separated by one line, but after the **hidden layer** ("learned representation") they can be.
 
-**Example (my own):** XOR outputs 1 when the two inputs differ. The points (0,0) and (1,1) belong to class 0, and (0,1) and (1,0) belong to class 1. No single straight line separates them. A hidden layer can reshape the points so one line does work. The module comes back to this in "The XOR Problem".
+**Example:** XOR outputs 1 when the two inputs differ. The points (0,0) and (1,1) belong to class 0, and (0,1) and (1,0) belong to class 1. No single straight line separates them. A hidden layer can reshape the points so one line does work. The module comes back to this in "The XOR Problem".
 
 #
 
