@@ -440,7 +440,7 @@ So **a 100-layer linear network has the same power as a 1-layer network.** The e
 - A smoother, probabilistic alternative to ReLU.
 - It became the standard in state-of-the-art **Transformer** models such as **GPT and BERT**.
 
-**The gallery (slide 47).** This slide shows plots of 15 activation functions side by side: ReLU, Sigmoid, Tanh, Leaky ReLU, ELU, SELU, GELU, Swish, Softplus, Hardtanh, Tanhshrink, Softsign, LogSigmoid, Hardshrink and Mish. The point is that many variants exist and most are small twists on the same ideas: squash into a range, or stay linear for positive values with a tweak for negative ones.
+**The gallery.** This slide shows plots of 15 activation functions side by side: ReLU, Sigmoid, Tanh, Leaky ReLU, ELU, SELU, GELU, Swish, Softplus, Hardtanh, Tanhshrink, Softsign, LogSigmoid, Hardshrink and Mish. The point is that many variants exist and most are small twists on the same ideas: squash into a range, or stay linear for positive values with a tweak for negative ones.
 
 #
 
