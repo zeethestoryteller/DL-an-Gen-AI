@@ -289,3 +289,182 @@ The forward pass makes ŷ, and the loss turns it into a single score. Slides 139
 5. If you removed all activation functions, what would the forward pass reduce to?
 
 *(Answers: 1. W is 4×3, b and z are 4×1. 2. y = 1, so 1−y = 0. 3. −ln(0.3) ≈ 1.20. 4. −log grows without bound as p→0, while squared error is capped near 1. 5. A single linear map.)*
+
+---
+---
+# ➡️ Gradient Descent: The Intuition
+
+I'll pull the gradient descent sections from your slides first so the guide matches your course.# Gradient Descent: A Complete Guide
+
+This follows your slides (pp. 139-145 and 244-260) and adds the intuition and numbers behind them.
+
+## 1. The problem it solves
+
+The forward pass and loss give you L(θ), a single number that depends on all the weights and biases (together called θ). Learning means finding **θ\*** that makes L as small as possible.
+
+You can't solve for θ\* directly. A network has millions of parameters and the loss surface is a complicated, non-linear landscape. Gradient descent doesn't try to see the whole landscape. It takes small steps downhill using only local information.
+
+## 2. The intuition: a hiker in fog
+
+You're on a mountain in thick fog and want the lowest valley. You can't see far, so at every step you ask two questions:
+
+1. **Which way is downhill?** Feel the slope under your feet. The **gradient ∇L** points in the direction of steepest *uphill*, so you go the opposite way.
+2. **How big a step?** This is the **learning rate η**. Too small and it takes forever. Too big and you overshoot the valley.
+
+## 3. The gradient
+
+For one parameter, the gradient is the ordinary derivative **dL/dθ**: the slope of the loss at the current point.
+
+- Slope positive → loss rises as θ increases → **decrease θ**
+- Slope negative → loss falls as θ increases → **increase θ**
+- Slope near zero → flat, so you're near a minimum, maximum, or saddle
+
+For many parameters, the gradient is the vector of all partial derivatives:
+
+**∇L = [∂L/∂θ₁, ∂L/∂θ₂, …, ∂L/∂θₙ]**
+
+Each entry says how sensitive the loss is to that one parameter. The vector as a whole points uphill, and its length says how steep the slope is.
+
+## 4. The update rule
+
+**θ_new = θ_old − η ∇L(θ_old)**
+
+or, per parameter, **θⱼ := θⱼ − η · ∂L/∂θⱼ**
+
+The minus sign is the "go downhill" part. The loop is:
+
+1. Compute the loss (forward pass)
+2. Compute the gradient (backpropagation, covered in your next slides)
+3. Update every parameter using the rule above
+4. Repeat until the loss stops improving
+
+## 5. The simplest example: L(θ) = θ²
+
+Here dL/dθ = 2θ, so the update is θ ← θ − η(2θ) = θ(1 − 2η). Start at θ = 4:
+
+| Learning rate | Steps | What happens |
+|---|---|---|
+| η = 0.01 | 4 → 3.92 → 3.84 → 3.77 | Safe but very slow |
+| **η = 0.1** | 4 → 3.2 → 2.56 → 2.05 | Smooth descent toward 0 |
+| η = 1.0 | 4 → −4 → 4 → −4 | Bounces forever, never converges |
+| η = 1.1 | 4 → −4.8 → 5.76 → −6.9 | **Diverges**, getting worse each step |
+
+Notice also that the steps shrink as you approach the minimum even though η is fixed. That happens because the gradient itself shrinks near a flat bottom.
+
+## 6. Worked example: linear regression (as in your slides)
+
+Model: ŷ = mx + c, with parameters θ = {m, c}.
+Loss: L = (1/N) Σ (ŷᵢ − yᵢ)²
+
+Taking derivatives (chain rule: the 2 comes from the square):
+
+- ∂L/∂m = (2/N) Σ (ŷᵢ − yᵢ) · xᵢ
+- ∂L/∂c = (2/N) Σ (ŷᵢ − yᵢ)
+
+Update rules (from your slides):
+
+- m := m − η ∂L/∂m
+- c := c − η ∂L/∂c
+
+**Numbers:** data (1, 2), (2, 4), (3, 6). The true line is y = 2x. Start at m = 0, c = 0, with η = 0.1.
+
+**Step 0:**
+- Predictions: all 0, so errors (ŷ − y) = −2, −4, −6
+- Loss = (4 + 16 + 36)/3 = **18.67**
+- ∂L/∂m = (2/3)(−2·1 − 4·2 − 6·3) = **−18.67**
+- ∂L/∂c = (2/3)(−12) = **−8.0**
+- m = 0 − 0.1(−18.67) = **1.867**, c = 0 − 0.1(−8) = **0.8**
+
+**Step 1:** loss drops to **0.296**, with gradients of about 1.96 and 1.07. The update gives m ≈ 1.67 and c ≈ 0.69.
+
+**Step 2:** loss is **0.073**.
+
+Both gradients were negative at the start, meaning "increasing m and c lowers the loss", and the updates moved them up. The loss fell from 18.67 to under 0.1 in two steps. It then settles in a long flat valley where m and c trade off (many (m, c) pairs fit these three points almost equally well), so it keeps creeping toward m = 2, c = 0 slowly.
+
+## 7. The learning rate
+
+| Too small | Just right | Too large |
+|---|---|---|
+| Slow, may stall | Steady decrease | Oscillates or diverges |
+| Wastes compute | Converges | Loss may become NaN |
+
+**Practical signs:** if the loss goes **up** or becomes NaN, η is too high. If it barely moves, η is too low. In practice, people try values like 0.1, 0.01, 0.001 and often use a **schedule** that decreases η over time.
+
+## 8. Local vs. global minima
+
+From your slides:
+
+- **Global minimum:** the true lowest point of the landscape
+- **Local minimum:** a valley that is lowest nearby but not overall, where gradient descent can get trapped (gradient is zero there)
+
+Two clarifications that are useful beyond the slides:
+
+- **Convex losses** (like MSE for linear regression) have one valley, so gradient descent reliably finds it.
+- In **deep networks**, true bad local minima turn out to be less of a problem than people once feared. **Saddle points** (flat in some directions, curved in others) and flat plateaus are the more common difficulty. Noise from mini-batches (next section) also helps escape them.
+
+## 9. Batch, stochastic, and mini-batch
+
+The gradient of the loss is an average over the data, so a key question is how much data to use per step. Your slides compare three options:
+
+| Aspect | Batch GD | Stochastic GD (SGD) | Mini-batch GD |
+|---|---|---|---|
+| Data per update | Entire dataset | One example | A small batch |
+| Updates per epoch | One | N (one per example) | N / batch size |
+| Speed per update | Slow | Fast | Moderate |
+| Stability | Smooth | Noisy, erratic | Fairly smooth |
+| Efficiency | Poor on big data | Efficient | Very efficient (GPU) |
+| Memory | High | Low | Moderate |
+
+**Mini-batch is the standard.** It balances the stability of batch GD with the speed of SGD, and GPUs process a batch in parallel. Typical batch sizes are 32, 64, 128, or 256.
+
+**Vocabulary:**
+- **Epoch:** one full pass through the training data
+- **Iteration:** one parameter update
+- Example: 1,000 examples with batch size 100 → 10 iterations per epoch
+
+## 10. Where backpropagation fits
+
+Gradient descent says "move opposite to the gradient." It does not say *how to compute* the gradient of a loss through millions of weights. That is what **backpropagation** does, using the chain rule. The two work together:
+
+- **Backpropagation:** computes ∇L
+- **Gradient descent:** uses ∇L to update θ
+
+Your next slides (pp. 263-304) cover this.
+
+## 11. Common pitfalls
+
+- **Features on very different scales:** the landscape becomes a long, narrow valley, and gradient descent zigzags. Normalizing inputs helps a lot.
+- **Bad initialization:** all-zero weights make every neuron in a layer identical, so they never differentiate. Use small random values.
+- **Forgetting that gradient descent only finds a *good-on-training-data* solution.** As the UAT lesson noted, low training loss does not guarantee good performance on unseen data.
+- **Not shuffling data:** with mini-batches, shuffle every epoch so batches aren't biased.
+
+## 12. Beyond plain gradient descent
+
+Modern training uses variants that add smarter step rules. Your course will likely cover these later, so here is just the idea:
+
+- **Momentum:** keeps a running average of past gradients so you roll through flat or noisy regions instead of stopping and starting
+- **Adam (and RMSprop):** adapts the step size for each parameter individually, so η effectively changes per weight
+
+Adam is the common default today.
+
+## 13. Summary
+
+1. Learning is minimizing the loss L(θ).
+2. The gradient points uphill, so we step the opposite way: **θ ← θ − η∇L**.
+3. η controls step size: too small is slow, too large diverges.
+4. Convex problems have one valley, while deep networks have saddles and plateaus.
+5. Mini-batch GD is the practical standard.
+6. Backpropagation computes the gradient and gradient descent uses it.
+
+## Check your understanding
+
+1. L(θ) = θ², θ = 3, η = 0.25. What is θ after one update?
+2. In the linear regression example, both gradients were negative. Which way did m and c move, and why?
+3. Why does gradient descent slow down near a minimum even with fixed η?
+4. 6,000 examples, batch size 200. How many iterations per epoch?
+5. Your loss suddenly becomes NaN after a few steps. What is the most likely cause?
+
+*(Answers: 1. Gradient = 6, so θ = 3 − 0.25·6 = 1.5. 2. Both increased, because the negative gradient times −η gives a positive change. 3. The gradient shrinks toward zero near a flat bottom, so steps get smaller. 4. 30. 5. The learning rate is too high and the updates are diverging.)*
+
+---
+---
