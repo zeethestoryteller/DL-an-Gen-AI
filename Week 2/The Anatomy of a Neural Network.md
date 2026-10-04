@@ -1,7 +1,7 @@
 # Index
-### [1 Universal Approximation Theorem]()
-### [2 ]()
-### [3 ]()
+### 1 [ Universal Approximation Theorem](https://github.com/zeethestoryteller/DL-an-Gen-AI/blob/main/Week%202/The%20Anatomy%20of%20a%20Neural%20Network.md#%EF%B8%8F-universal-approximation-theorem)
+### 2 [ Forward Pass and Loss Functions](https://github.com/zeethestoryteller/DL-an-Gen-AI/edit/main/Week%202/The%20Anatomy%20of%20a%20Neural%20Network.md#%EF%B8%8F-gradient-descent-the-intuition)
+### 3 [Gradient Descent: The Intuition ](https://github.com/zeethestoryteller/DL-an-Gen-AI/edit/main/Week%202/The%20Anatomy%20of%20a%20Neural%20Network.md#%EF%B8%8F-gradient-descent-the-intuition)
 
 
 
